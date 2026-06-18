@@ -1,0 +1,6 @@
+build:
+  image: archlinux
+  stage: build
+  script:
+    - pacman -Sy python python-pip docker --noconfirm
+    - ./ci-build.sh
