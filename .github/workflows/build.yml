@@ -16,6 +16,7 @@ on:
 env:
   TARGET: ${{ github.event.inputs.target || vars.TARGET }}
   ENTRY: ${{ github.event.inputs.entry || vars.ENTRY }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
 
 jobs:
   build:
@@ -50,5 +51,5 @@ jobs:
             TARGET=${{ env.TARGET }}
             ENTRY=${{ env.ENTRY }}
           tags: |
-            ${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}:latest
-            ${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}:v${{ steps.get-version.outputs.version }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:v${{ steps.get-version.outputs.version }}

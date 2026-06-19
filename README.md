@@ -2,7 +2,7 @@
 
 Build and publish Docker images from PyPI packages via GitHub Actions.
 
-This template repository automates building Docker images for any Python package on PyPI. It uses two build arguments — `TARGET` (the PyPI package name) and `ENTRY` (the module entry point) — making it fully generic and reusable.
+This template repository automates building Docker images for any Python package on PyPI. It uses build arguments — `TARGET` (the PyPI package name) and `ENTRY` (the module entry point) — making it fully generic and reusable.
 
 Based on [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-docker).
 
@@ -19,53 +19,42 @@ Based on [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-dock
 
 ### 2. Add repository secrets
 
-Go to **Settings → Secrets and variables → Actions** and add to "Environment Secrets":
+Go to **Settings → Secrets and variables → Actions → Environment secrets** and add:
 
 | Secret | Description |
 |--------|-------------|
 | `DOCKER_USER` | Your Docker Hub username |
 | `DOCKER_PW` | Your Docker Hub access token or password |
 
-The image will be published as `<DOCKER_USER>/<repository-name>`.
+These are only used for login — they don't appear in image tags.
 
-### 3. Configure build arguments
+### 3. Set repository variables
 
-The Dockerfile requires two build arguments with no defaults:
-
-| Arg | Description | Example |
-|-----|-------------|---------|
-| `TARGET` | PyPI package to install | `anki` |
-| `ENTRY` | Python module entry point to run | `syncserver` |
-
-These are passed via the workflow when triggering a manual run (see below).
-
-### 4. Set repository variables for scheduled builds
-
-Since scheduled and push-triggered runs don't accept `workflow_dispatch` inputs, you can set repository variables instead:
-
-Go to **Settings → Secrets and variables → Actions → Variables** and add to "Environment Variables":
+Go to **Settings → Secrets and variables → Actions → Environment variables** and add:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `TARGET` | PyPI package name | `anki` |
-| `ENTRY` | Module entry point | `syncserver` |
+| `TARGET` | PyPI package to install | `anki` |
+| `ENTRY` | Python module entry point to run | `syncserver` |
+| `IMAGE_NAME` | Full Docker image name (user/repo) | `cryptkiddie2/docker-build-remote` |
 
-Then update the workflow env section to prefer these variables:
+The Dockerfile requires `TARGET` and `ENTRY` as build arguments with no defaults — they must always be provided.
 
-```yaml
-env:
-  TARGET: ${{ vars.TARGET }}
-  ENTRY: ${{ vars.ENTRY }}
+`IMAGE_NAME` is used for the Docker Hub tags (e.g. `cryptkiddie2/docker-build-remote:latest`). Using a variable instead of a secret avoids masking issues in logs and works correctly with local tools like `act`.
+
+### 4. (Optional) Override via manual run
+
+When triggering **Run workflow** manually, you can override `TARGET` and `ENTRY` via the input fields. `IMAGE_NAME` always comes from the repository variable.
+
+## Running Locally with `act`
+
+```bash
+act --var-file .env --secret-file .env.secrets push
 ```
 
-## Running a Manual Build
+The `.env` file provides `TARGET`, `ENTRY`, and `IMAGE_NAME`. The `.env.secrets` file provides `DOCKER_USER` and `DOCKER_PW`.
 
-1. Go to **Actions → Build and Push Docker Image**.
-2. Click **Run workflow**.
-3. Fill in `TARGET` (e.g. `anki`) and `ENTRY` (e.g. `syncserver`).
-4. Click **Run workflow**.
-
-## Building Locally
+## Building Locally with Docker
 
 ```bash
 docker build --build-arg TARGET=anki --build-arg ENTRY=syncserver -t anki-sync .
@@ -84,7 +73,7 @@ See [`docker-compose.yml.example`](docker-compose.yml.example) for a ready-to-us
 ```yaml
 services:
    ankisync:
-      image: <DOCKER_USER>/docker-build-remote:latest
+      image: cryptkiddie2/docker-build-remote:latest
       environment:
          - SYNC_USER1=USERNAME:HASHED_PASSWORD
       volumes:
@@ -101,5 +90,5 @@ volumes:
 
 Images are pushed to Docker Hub automatically:
 
-- `<DOCKER_USER>/<repo>:latest` — always the latest build
-- `<DOCKER_USER>/<repo>:v<version>` — pinned to the PyPI version
+- `<IMAGE_NAME>:latest` — always the latest build
+- `<IMAGE_NAME>:v<version>` — pinned to the PyPI version
