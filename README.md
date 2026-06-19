@@ -1,6 +1,8 @@
 # Anki Sync Server Docker build
 
-This is a dockerized version of the [Anki Sync Server](https://docs.ankiweb.net/sync-server.html) used to sync your anki cards between clients without using the official cloud.
+This is a template to build a docker image from a docker enabled project hosted on pypi.
+
+Based of off [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-docker)
 
 A fresh build is automatically issued every day as I'd forget to update it otherwise.
 I have enabled password hashing by default because it is 2024 after all.
