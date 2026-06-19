@@ -7,8 +7,15 @@
 #RUN cargo build
 
 FROM python
-RUN pip install anki
+
+ARG TARGET
+ARG ENTRY
+ENV TARGET=${TARGET} ENTRY=${ENTRY}
+
+RUN pip install "$TARGET"
+
 ENV SYNC_BASE=/data PASSWORDS_HASHED=1
+
 VOLUME ["/data"]
-#COPY --from=0 /pbkdf2-password-hash/target/debug/pbkdf2-hash-password /opt/pbkdf2-hash-password
-CMD python -m anki.syncserver
+
+CMD ["sh", "-c", "python -m $TARGET.$ENTRY"]

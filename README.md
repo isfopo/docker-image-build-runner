@@ -1,28 +1,105 @@
-# Anki Sync Server Docker build
+# docker-build-remote
 
-This is a template to build a docker image from a docker enabled project hosted on pypi.
+Build and publish Docker images from PyPI packages via GitHub Actions.
 
-Based of off [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-docker)
+This template repository automates building Docker images for any Python package on PyPI. It uses two build arguments — `TARGET` (the PyPI package name) and `ENTRY` (the module entry point) — making it fully generic and reusable.
 
-A fresh build is automatically issued every day as I'd forget to update it otherwise.
-I have enabled password hashing by default because it is 2024 after all.
-Unfortunately i can't include the tool to hash your passwords as it is on sourcehut and they seem to be blocking my build server so you need to hash your own passwords. Also please notice that for docker compose you need to escape every $ by replacing it with $$.
+Based on [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-docker).
 
-An example docker compose file looks like this:
+## How It Works
 
+1. A GitHub Actions workflow triggers on push to `main`, on a daily schedule, or manually via `workflow_dispatch`.
+2. It fetches the latest version of the target package from the PyPI JSON API.
+3. It builds the Docker image using `TARGET` and `ENTRY` as build arguments.
+4. It pushes the image to Docker Hub with two tags: `latest` and `v<version>`.
+
+## Setup
+
+### 1. Fork this repository
+
+### 2. Add repository secrets
+
+Go to **Settings → Secrets and variables → Actions** and add:
+
+| Secret | Description |
+|--------|-------------|
+| `DOCKER_USER` | Your Docker Hub username |
+| `DOCKER_PW` | Your Docker Hub access token or password |
+
+The image will be published as `<DOCKER_USER>/<repository-name>`.
+
+### 3. Configure build arguments
+
+The Dockerfile requires two build arguments with no defaults:
+
+| Arg | Description | Example |
+|-----|-------------|---------|
+| `TARGET` | PyPI package to install | `anki` |
+| `ENTRY` | Python module entry point to run | `syncserver` |
+
+These are passed via the workflow when triggering a manual run (see below).
+
+### 4. (Optional) Set repository variables for scheduled builds
+
+Since scheduled and push-triggered runs don't accept `workflow_dispatch` inputs, you can set repository variables instead:
+
+Go to **Settings → Secrets and variables → Actions → Variables** and add:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TARGET` | PyPI package name | `anki` |
+| `ENTRY` | Module entry point | `syncserver` |
+
+Then update the workflow env section to prefer these variables:
+
+```yaml
+env:
+  TARGET: ${{ vars.TARGET }}
+  ENTRY: ${{ vars.ENTRY }}
 ```
-version: '3'
+
+## Running a Manual Build
+
+1. Go to **Actions → Build and Push Docker Image**.
+2. Click **Run workflow**.
+3. Fill in `TARGET` (e.g. `anki`) and `ENTRY` (e.g. `syncserver`).
+4. Click **Run workflow**.
+
+## Building Locally
+
+```bash
+docker build --build-arg TARGET=anki --build-arg ENTRY=syncserver -t anki-sync .
+```
+
+Then run:
+
+```bash
+docker run -v anki_data:/data anki-sync
+```
+
+## Docker Compose Example
+
+See [`docker-compose.yml.example`](docker-compose.yml.example) for a ready-to-use compose file:
+
+```yaml
 services:
    ankisync:
-      image: cryptkiddie2/ankisyncserver:latest
+      image: <DOCKER_USER>/docker-build-remote:latest
       environment:
          - SYNC_USER1=USERNAME:HASHED_PASSWORD
-       volumes:
-          - anki_data:/data
+      volumes:
+         - anki_data:/data
 
 volumes:
   anki_data:
     driver: local
 ```
 
-The built version on docker hub is [here](https://hub.docker.com/repository/docker/cryptkiddie2/ankisyncserver)
+> Password hashing is enabled by default. Escape every `$` in hashed passwords as `$$` in docker-compose.
+
+## Built Images
+
+Images are pushed to Docker Hub automatically:
+
+- `<DOCKER_USER>/<repo>:latest` — always the latest build
+- `<DOCKER_USER>/<repo>:v<version>` — pinned to the PyPI version

@@ -7,6 +7,15 @@ on:
     # Run daily at 00:00 UTC
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      target:
+        description: "PyPI package to build"
+      entry:
+        description: "Module entry point"
+
+env:
+  TARGET: ${{ github.event.inputs.target }}
+  ENTRY: ${{ github.event.inputs.entry }}
 
 jobs:
   build:
@@ -19,7 +28,7 @@ jobs:
       - name: Get latest version
         id: get-version
         run: |
-          VERSION=$(curl -s https://pypi.org/pypi/anki/json \
+          VERSION=$(curl -s https://pypi.org/pypi/${{ env.TARGET }}/json \
             | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -37,6 +46,9 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            TARGET=${{ env.TARGET }}
+            ENTRY=${{ env.ENTRY }}
           tags: |
             ${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}:latest
             ${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}:v${{ steps.get-version.outputs.version }}
