@@ -19,7 +19,7 @@ Based on [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-dock
 
 ### 2. Add repository secrets
 
-Go to **Settings → Secrets and variables → Actions** and add:
+Go to **Settings → Secrets and variables → Actions** and add to "Environment Secrets":
 
 | Secret | Description |
 |--------|-------------|
@@ -43,7 +43,7 @@ These are passed via the workflow when triggering a manual run (see below).
 
 Since scheduled and push-triggered runs don't accept `workflow_dispatch` inputs, you can set repository variables instead:
 
-Go to **Settings → Secrets and variables → Actions → Variables** and add:
+Go to **Settings → Secrets and variables → Actions → Variables** and add to "Environment Variables":
 
 | Variable | Description | Example |
 |----------|-------------|---------|

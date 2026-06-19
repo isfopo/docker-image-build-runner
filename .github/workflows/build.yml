@@ -14,8 +14,8 @@ on:
         description: "Module entry point"
 
 env:
-  TARGET: ${{ github.event.inputs.target }}
-  ENTRY: ${{ github.event.inputs.entry }}
+  TARGET: ${{ github.event.inputs.target || vars.TARGET }}
+  ENTRY: ${{ github.event.inputs.entry || vars.ENTRY }}
 
 jobs:
   build:
