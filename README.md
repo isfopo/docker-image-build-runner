@@ -46,13 +46,53 @@ The Dockerfile requires `TARGET` and `ENTRY` as build arguments with no defaults
 
 When triggering **Run workflow** manually, you can override `TARGET` and `ENTRY` via the input fields. `IMAGE_NAME` always comes from the repository variable.
 
-## Running Locally with `act`
+## Local Testing with `act`
+
+[`act`](https://github.com/nektos/act) runs GitHub Actions locally using Docker.
+
+### Install `act`
+
+**macOS (Homebrew):**
+```bash
+brew install act
+```
+
+**Linux:**
+```bash
+curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+```
+
+**Windows (Scoop):**
+```powershell
+scoop install act
+```
+
+See the [act installation docs](https://github.com/nektos/act#installation) for other methods.
+
+> **Apple Silicon note:** If you're on an M-series Mac, run with `--container-architecture linux/amd64` to avoid compatibility issues.
+
+### Configure local environment
+
+Create a `.env` file with your variables:
+```bash
+TARGET=anki
+ENTRY=syncserver
+IMAGE_NAME=youruser/yourimage
+```
+
+Create a `.env.secrets` file with your Docker Hub credentials:
+```bash
+DOCKER_USER=your_dockerhub_username
+DOCKER_PW=your_dockerhub_token
+```
+
+> **Important:** `.env.secrets` is listed in `.gitignore` — never commit your credentials.
+
+### Run
 
 ```bash
 act --var-file .env --secret-file .env.secrets push
 ```
-
-The `.env` file provides `TARGET`, `ENTRY`, and `IMAGE_NAME`. The `.env.secrets` file provides `DOCKER_USER` and `DOCKER_PW`.
 
 ## Building Locally with Docker
 
