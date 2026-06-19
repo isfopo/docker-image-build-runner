@@ -1,6 +1,6 @@
 services:
    app:
-      image: <DOCKER_USER>/docker-build-remote:latest
+      image: <DOCKER_USER>/build-docker-image:latest
       environment:
          - SYNC_USER1=USERNAME:HASHED_PASSWORD
       volumes:
