@@ -39,7 +39,7 @@ The Dockerfile requires two build arguments with no defaults:
 
 These are passed via the workflow when triggering a manual run (see below).
 
-### 4. (Optional) Set repository variables for scheduled builds
+### 4. Set repository variables for scheduled builds
 
 Since scheduled and push-triggered runs don't accept `workflow_dispatch` inputs, you can set repository variables instead:
 
