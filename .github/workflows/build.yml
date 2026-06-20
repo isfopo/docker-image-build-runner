@@ -12,6 +12,8 @@ on:
         description: "PyPI package to build"
       entry:
         description: "Module entry point"
+      image-name:
+        description: "The final image name including username - ex. 'isfopo/ankisyncserver'"
 
 env:
   TARGET: ${{ github.event.inputs.target || vars.TARGET }}
