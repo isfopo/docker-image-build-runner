@@ -50,7 +50,20 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PW }}
 
+      - name: Check for new version
+        id: check-version
+        run: |
+          IMAGE="${{ secrets.DOCKER_USER }}/${{ env.TARGET }}-${{ env.ENTRY }}:v${{ steps.get-version.outputs.version }}"
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Image $IMAGE already exists on Docker Hub. Skipping build."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Image $IMAGE not found. Will build."
+          fi
+
       - name: Build and push Docker image
+        if: steps.check-version.outputs.exists == 'false'
         uses: docker/build-push-action@v6
         with:
           context: .
