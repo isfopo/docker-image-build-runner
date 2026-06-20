@@ -13,12 +13,12 @@ on:
       entry:
         description: "Module entry point"
       image-name:
-        description: "The final image name including username - ex. 'isfopo/ankisyncserver'"
+        description: "The final image name including username - ex. 'ankisyncserver'"
 
 env:
   TARGET: ${{ github.event.inputs.target || vars.TARGET }}
   ENTRY: ${{ github.event.inputs.entry || vars.ENTRY }}
-  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+  IMAGE_NAME: ${{ secrets.DOCKER_USER }}/${{ env.TARGET }}-${{ env.ENTRY }}
 
 jobs:
   build:
