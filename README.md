@@ -8,43 +8,40 @@ Based on [ankisyncserver-docker](https://git.zehka.net/zehka/ankisyncserver-dock
 
 ## How It Works
 
-1. A GitHub Actions workflow triggers on push to `main`, on a daily schedule, or manually via `workflow_dispatch`.
+1. A GitHub Actions workflow triggers daily at 00:00 UTC on a schedule.
 2. It fetches the latest version of the target package from the PyPI JSON API.
 3. It builds the Docker image using `TARGET` and `ENTRY` as build arguments.
 4. It pushes the image to Docker Hub with two tags: `latest` and `v<version>`.
 
 ## Setup
 
-### 1. Fork this repository
+### 1. Create a deployment environment
 
-### 2. Add repository secrets
+Go to **Settings → Environments** and create an environment. All secrets and variables must be set there. Make sure the `environment` key in the workflow matches the name you choose.
 
-Go to **Settings → Secrets and variables → Actions → Environment secrets** and add:
+### 2. Add environment secrets
+
+In your environment, add:
 
 | Secret | Description |
 |--------|-------------|
 | `DOCKER_USER` | Your Docker Hub username |
 | `DOCKER_PW` | Your Docker Hub access token or password |
 
-These are only used for login — they don't appear in image tags.
+These are used for login and to construct the image tag — the username becomes the namespace in the Docker Hub image name.
 
-### 3. Set repository variables
+### 4. Set environment variables
 
-Go to **Settings → Secrets and variables → Actions → Environment variables** and add:
+In your environment, add:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `TARGET` | PyPI package to install | `anki` |
 | `ENTRY` | Python module entry point to run | `syncserver` |
-| `IMAGE_NAME` | Full Docker image name (user/repo) | `cryptkiddie2/docker-build-remote` |
 
 The Dockerfile requires `TARGET` and `ENTRY` as build arguments with no defaults — they must always be provided.
 
-`IMAGE_NAME` is used for the Docker Hub tags (e.g. `cryptkiddie2/docker-build-remote:latest`). Using a variable instead of a secret avoids masking issues in logs and works correctly with local tools like `act`.
-
-### 4. (Optional) Override via manual run
-
-When triggering **Run workflow** manually, you can override `TARGET` and `ENTRY` via the input fields. `IMAGE_NAME` always comes from the repository variable.
+The image name is derived automatically as `<DOCKER_USER>/<TARGET>-<ENTRY>` (e.g. `cryptkiddie2/anki-syncserver`). No separate `IMAGE_NAME` variable is needed.
 
 ## Local Testing with `act`
 
@@ -73,14 +70,20 @@ See the [act installation docs](https://github.com/nektos/act#installation) for 
 
 ### Configure local environment
 
-Create a `.env` file with your variables:
+Copy the example files and fill in your values:
+
+```bash
+cp .env.example .env
+cp .env.secrets.example .env.secrets
+```
+
+Edit `.env` with your build variables:
 ```bash
 TARGET=anki
 ENTRY=syncserver
-IMAGE_NAME=youruser/yourimage
 ```
 
-Create a `.env.secrets` file with your Docker Hub credentials:
+Edit `.env.secrets` with your Docker Hub credentials:
 ```bash
 DOCKER_USER=your_dockerhub_username
 DOCKER_PW=your_dockerhub_token
@@ -91,8 +94,10 @@ DOCKER_PW=your_dockerhub_token
 ### Run
 
 ```bash
-act --var-file .env --secret-file .env.secrets push
+act --var-file .env --secret-file .env.secrets -j build
 ```
+
+> **Note:** Since the workflow only runs on a schedule, `act` must target the `build` job directly.
 
 ## Building Locally with Docker
 
@@ -101,34 +106,13 @@ docker build --build-arg TARGET=anki --build-arg ENTRY=syncserver -t anki-sync .
 ```
 
 Then run:
-
 ```bash
 docker run -v anki_data:/data anki-sync
 ```
 
-## Docker Compose Example
-
-See [`docker-compose.yml.example`](docker-compose.yml.example) for a ready-to-use compose file:
-
-```yaml
-services:
-   ankisync:
-      image: cryptkiddie2/docker-build-remote:latest
-      environment:
-         - SYNC_USER1=USERNAME:HASHED_PASSWORD
-      volumes:
-         - anki_data:/data
-
-volumes:
-  anki_data:
-    driver: local
-```
-
-> Password hashing is enabled by default. Escape every `$` in hashed passwords as `$$` in docker-compose.
-
 ## Built Images
 
-Images are pushed to Docker Hub automatically:
+Images are pushed to Docker Hub automatically on each daily build:
 
-- `<IMAGE_NAME>:latest` — always the latest build
-- `<IMAGE_NAME>:v<version>` — pinned to the PyPI version
+- `<DOCKER_USER>/<TARGET>-<ENTRY>:latest` — always the latest build
+- `<DOCKER_USER>/<TARGET>-<ENTRY>:v<version>` — pinned to the PyPI version
