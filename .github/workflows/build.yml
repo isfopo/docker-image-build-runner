@@ -27,6 +27,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate configuration
+        run: |
+          if [ -z "${{ env.TARGET }}" ]; then
+            echo "::error::TARGET is not set. Add it as a repository/environment variable or provide it via workflow_dispatch."
+            exit 1
+          fi
+          if [ -z "${{ env.ENTRY }}" ]; then
+            echo "::error::ENTRY is not set. Add it as a repository/environment variable or provide it via workflow_dispatch."
+            exit 1
+          fi
+          if [ -z "${{ env.IMAGE_NAME }}" ]; then
+            echo "::error::IMAGE_NAME is not set. Add it as a repository/environment variable (not a secret — vars are accessed via vars.*, secrets via secrets.*)."
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
