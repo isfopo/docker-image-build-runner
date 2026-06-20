@@ -12,13 +12,10 @@ on:
         description: "PyPI package to build"
       entry:
         description: "Module entry point"
-      image-name:
-        description: "The final image name including username - ex. 'ankisyncserver'"
 
 env:
   TARGET: ${{ github.event.inputs.target || vars.TARGET }}
   ENTRY: ${{ github.event.inputs.entry || vars.ENTRY }}
-  IMAGE_NAME: ${{ secrets.DOCKER_USER }}/${{ env.TARGET }}-${{ env.ENTRY }}
 
 jobs:
   build:
@@ -37,10 +34,6 @@ jobs:
           fi
           if [ -z "${{ env.ENTRY }}" ]; then
             echo "::error::ENTRY is not set. Add it as a repository/environment variable or provide it via workflow_dispatch."
-            exit 1
-          fi
-          if [ -z "${{ env.IMAGE_NAME }}" ]; then
-            echo "::error::IMAGE_NAME is not set. Add it as a repository/environment variable (not a secret — vars are accessed via vars.*, secrets via secrets.*)."
             exit 1
           fi
 
@@ -74,5 +67,5 @@ jobs:
             TARGET=${{ env.TARGET }}
             ENTRY=${{ env.ENTRY }}
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:v${{ steps.get-version.outputs.version }}
+            ${{ secrets.DOCKER_USER }}/${{ env.TARGET }}-${{ env.ENTRY }}:latest
+            ${{ secrets.DOCKER_USER }}/${{ env.TARGET }}-${{ env.ENTRY }}:v${{ steps.get-version.outputs.version }}
